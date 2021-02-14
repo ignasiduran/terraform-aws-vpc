@@ -5,6 +5,35 @@
 
 This Terraform module deploys a VPC resources in AWS.
 
+## backend.tf
+```hcl
+terraform {
+  required_version = "= 0.12.30"
+
+  backend "s3" {
+    bucket   = "<bucket_name>"
+    key      = "<s3_key>"
+    region   = "eu-west-1"
+    profile  = "<aws_profile>"
+    role_arn = "arn:aws:iam::<aws_account_id>:role/<aws_role_name_to_assume>"
+  }
+}
+```
+
+## providers.tf
+
+```hcl
+provider "aws" {
+  assume_role {
+    role_arn     = "arn:aws:iam::${var.general.aws_account}:role/${var.general.aws_role_name}"
+    session_name = var.general.aws_session_name
+  }
+
+  version = ">= 3.28.0"
+  region  = var.general.aws_region
+  profile = var.general.aws_profile
+}
+```
 
 ## main.tf
 
@@ -34,6 +63,21 @@ module "networking" {
 
 ```hcl
 ##########################
+# General variables
+##########################
+variable "general" {
+  description = "General variables"
+  type        = map(string)
+  default = {
+    aws_account      = "<aws_account_is>"
+    aws_region       = "eu-west-1"
+    aws_profile      = "<aws_profile>"
+    aws_role_name    = "<aws_role_name_to_assume>"
+    aws_session_name = "terraform"
+  }
+}
+
+##########################
 # General Tags
 ##########################
 variable "tags" {
@@ -46,9 +90,9 @@ variable "tags" {
   }
 }
 
-######
+##########################
 # Networking - VPC, Subnets, Route tables, DHCP Options, IG, NAT GW
-######
+##########################
 variable "networking" {
   description = "Networking variables"
   type        = map(string)
